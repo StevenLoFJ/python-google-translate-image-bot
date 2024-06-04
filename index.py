@@ -1,32 +1,37 @@
 from selenium import webdriver
+import subprocess
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from helpers.common import randomStringGenerator
 from helpers.image import getImageFromUrl
+from pyvirtualdisplay import Display
 import os
+os.environ['XAUTHORITY'] = '/tmp/.Xauthority'
+subprocess.run(['xauth', 'generate', ':0', '.', 'trusted'], check=True)
+display = Display(visible=0, size=(1920, 1080))
+display.start()
 
-#os.environ['DISPLAY'] = ':0'
-import os,pyautogui,time,flask
-
+import pyautogui,time,flask
 app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
+
     imgUrl = flask.request.args.get('image_url','')
     option = Options()
     option.add_argument('--disable-blink-features=AutomationControlled') #unmark controlled unit di chrome
    #option.add_argument("no-sandbox")
-    #option.add_argument("headless")
+    option.add_argument("headless")
     # option.add_argument("disable-gpu")
-    driverPath=''
-    #driverPath = "/usr/bin/chromedriver"
+    #driverPath=''
+    driverPath = "/usr/bin/chromedriver"
     fileName =randomStringGenerator()
     print(fileName)
     dir = os.getcwd()
     image_path = dir + "\\img-temp\\"+fileName+".png"
     getImageFromUrl(imgUrl ,image_path)
-    browser = webdriver.Chrome(options=option)
+    browser = webdriver.Chrome(driverPath,options=option)
 
     browser.get('https://translate.google.com/?sl=id&tl=en&op=images')
     time.sleep(3)

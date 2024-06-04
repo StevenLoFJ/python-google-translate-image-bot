@@ -1,9 +1,12 @@
+import os
+
+os.environ['DISPLAY'] = ':0'
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 import time
-import os
+
 import pyautogui
 
 option = Options()
