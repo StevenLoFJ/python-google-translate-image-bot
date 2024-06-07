@@ -2,6 +2,7 @@ import os
 
 os.environ['DISPLAY'] = ':0'
 from selenium import webdriver
+import pyperclip
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
@@ -11,6 +12,8 @@ import pyautogui
 
 option = Options()
 option.add_argument('--disable-blink-features=AutomationControlled') #unmark controlled unit di chrome
+option.add_argument('--disable-popup-blocking') #unmark controlled unit di chrome
+
 dir = os.getcwd()
 image_path = dir + "\\img-temp\\test.png"
 browser = webdriver.Chrome(options=option)
@@ -19,11 +22,18 @@ browser.get('https://translate.google.com/?sl=id&tl=en&op=images')
 time.sleep(1)
 
 #image_path = "D:\\Work\\learn\\py\\upload-google-image-translate-bot\\test.png"
-
+button = browser.find_element(By.XPATH, '//input[@type="file"]')
+pyperclip.copy(image_path)
+pyautogui.hotkey('ctrl', 'v')
+pyautogui.hotkey('enter')
+button.send_keys(image_path)
+time.sleep(10000)
 pyautogui.press('enter') #force open download file
 time.sleep(1) #force buffer sebelum popup launch
 
 pyautogui.typewrite(image_path) #force autoGUI input file url
+
+
 time.sleep(1) #buffer buat pyautoGUI typing
 
 pyautogui.press('enter') #buffer submit

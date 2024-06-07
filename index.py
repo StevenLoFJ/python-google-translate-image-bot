@@ -1,52 +1,61 @@
 from selenium import webdriver
-import subprocess
+import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from helpers.common import randomStringGenerator
 from helpers.image import getImageFromUrl
+import Xlib.display
+from selenium.webdriver.chrome.service import Service
 from pyvirtualdisplay import Display
-import os
-os.environ['XAUTHORITY'] = '/tmp/.Xauthority'
-subprocess.run(['xauth', 'generate', ':0', '.', 'trusted'], check=True)
+import time,flask
 display = Display(visible=0, size=(1920, 1080))
 display.start()
+import pyautogui
 
-import pyautogui,time,flask
+pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ['DISPLAY'])
+
+
 app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
 
-    imgUrl = flask.request.args.get('image_url','')
+    #imgUrl = flask.request.args.get('image_url','')
+    imgUrl= 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkjvtQ8VnKYCd_F65p0d6HtTy6woyi8ZhKew'
     option = Options()
+
     option.add_argument('--disable-blink-features=AutomationControlled') #unmark controlled unit di chrome
-   #option.add_argument("no-sandbox")
-    option.add_argument("headless")
-    # option.add_argument("disable-gpu")
+  
+    option.add_argument("--headless")
+    option.add_argument("--no-sandbox")
+    option.add_argument("--disable-dev-shm-usage")  
     #driverPath=''
     driverPath = "/usr/bin/chromedriver"
+    service = Service(driverPath)
     fileName =randomStringGenerator()
-    print(fileName)
     dir = os.getcwd()
     image_path = dir + "\\img-temp\\"+fileName+".png"
     getImageFromUrl(imgUrl ,image_path)
-    browser = webdriver.Chrome(driverPath,options=option)
+    browser = webdriver.Chrome(service=service,options=option)
 
-    browser.get('https://translate.google.com/?sl=id&tl=en&op=images')
+    #browser.get('https://translate.google.com/?sl=id&tl=en&op=images')
+    browser.get('https://www.speedtypingonline.com/typing-test')
     time.sleep(3)
 
     #image_path = "D:\\Work\\learn\\py\\upload-google-image-translate-bot\\test.png"
-
-    pyautogui.press('enter') #force open download file
+    pyautogui.typewrite('testngetik') #force open download file
     time.sleep(1) #force buffer sebelum popup launch
-
+    screenshot_path = 'screenshot.png'
+    browser.save_screenshot(screenshot_path)
+    print(f"Screenshot saved to {screenshot_path}")
+    return screenshot_path
     pyautogui.typewrite(image_path) #force autoGUI input file url
     time.sleep(1) #buffer buat pyautoGUI typing
 
     pyautogui.press('enter') #buffer submit
     time.sleep(1)
-
+  
     elements = browser.find_elements(By.CLASS_NAME, "Jmlpdc")  # TODO: makesure IDnya ga dynamic
     element= elements[1]
     imageUrl = element.get_attribute('src')
@@ -71,4 +80,4 @@ def index():
     return resultPath
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=80)
