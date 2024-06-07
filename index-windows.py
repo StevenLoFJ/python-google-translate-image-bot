@@ -1,6 +1,5 @@
+# this file is used to test the code in windows environment
 import os
-
-os.environ['DISPLAY'] = ':0'
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -11,19 +10,43 @@ import pyautogui
 
 option = Options()
 option.add_argument('--disable-blink-features=AutomationControlled') #unmark controlled unit di chrome
+option.add_argument('--disable-popup-blocking') #unmark controlled unit di chrome
+
 dir = os.getcwd()
-image_path = dir + "\\img-temp\\test.png"
+image_path = dir + "\\result-temp\\BG4IFTWK0KRO.png"
 browser = webdriver.Chrome(options=option)
 
 browser.get('https://translate.google.com/?sl=id&tl=en&op=images')
 time.sleep(1)
 
-#image_path = "D:\\Work\\learn\\py\\upload-google-image-translate-bot\\test.png"
-
 pyautogui.press('enter') #force open download file
 time.sleep(1) #force buffer sebelum popup launch
 
 pyautogui.typewrite(image_path) #force autoGUI input file url
+time.sleep(1) #buffer buat pyautoGUI typing
+
+pyautogui.press('enter') #buffer submit
+
+# adding loop to check gradually
+elements=[]
+retryCounter=0
+while len(elements) < 2 and retryCounter < 5:
+    print(len(elements))
+    elements = browser.find_elements(By.CLASS_NAME, "Jmlpdc")  # TODO: makesure IDnya ga dynamic
+    retryCounter = retryCounter + 1
+    time.sleep(1)
+    
+    
+element= elements[1]
+imageUrl = element.get_attribute('src')
+print(imageUrl)
+time.sleep(1)
+pyautogui.press('enter') #force open download file
+time.sleep(1) #force buffer sebelum popup launch
+
+pyautogui.typewrite(image_path) #force autoGUI input file url
+
+
 time.sleep(1) #buffer buat pyautoGUI typing
 
 pyautogui.press('enter') #buffer submit
@@ -48,5 +71,3 @@ pyautogui.write(resultPath)
 pyautogui.press('enter')
 time.sleep(4) #buffer buat download
 browser.quit()
-#ActionChains(browser).move_to_element(button).click(button).perform()
-#browser.quit()
