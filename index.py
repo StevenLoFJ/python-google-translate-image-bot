@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from helpers.common import randomStringGenerator
+from helpers.aws import uploadToS3
 from helpers.image import getImageFromUrl
 import Xlib.display
 from selenium.webdriver.chrome.service import Service
@@ -15,69 +16,68 @@ import pyautogui
 
 pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ['DISPLAY'])
 
-
 app = flask.Flask(__name__)
-
+dir = os.getcwd()
 @app.route('/')
 def index():
-
-    #imgUrl = flask.request.args.get('image_url','')
-    imgUrl= 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkjvtQ8VnKYCd_F65p0d6HtTy6woyi8ZhKew'
+    imgUrl = flask.request.args.get('image_url','')
     option = Options()
-
+    
     option.add_argument('--disable-blink-features=AutomationControlled') #unmark controlled unit di chrome
-  
-    option.add_argument("--headless")
     option.add_argument("--no-sandbox")
     option.add_argument("--disable-dev-shm-usage")  
-    #driverPath=''
+    
     driverPath = "/usr/bin/chromedriver"
     service = Service(driverPath)
     fileName =randomStringGenerator()
-    dir = os.getcwd()
-    image_path = dir + "\\img-temp\\"+fileName+".png"
+    image_path = dir + "/img-temp/"+fileName+".png"
     getImageFromUrl(imgUrl ,image_path)
     browser = webdriver.Chrome(service=service,options=option)
 
-    #browser.get('https://translate.google.com/?sl=id&tl=en&op=images')
-    browser.get('https://www.speedtypingonline.com/typing-test')
+    browser.get('https://translate.google.com/?sl=id&tl=en&op=images')
     time.sleep(3)
 
-    #image_path = "D:\\Work\\learn\\py\\upload-google-image-translate-bot\\test.png"
-    pyautogui.typewrite('testngetik') #force open download file
+    pyautogui.press('enter') #force open download file
     time.sleep(1) #force buffer sebelum popup launch
-    screenshot_path = 'screenshot.png'
-    browser.save_screenshot(screenshot_path)
-    print(f"Screenshot saved to {screenshot_path}")
-    return screenshot_path
+
     pyautogui.typewrite(image_path) #force autoGUI input file url
     time.sleep(1) #buffer buat pyautoGUI typing
 
     pyautogui.press('enter') #buffer submit
-    time.sleep(1)
   
-    elements = browser.find_elements(By.CLASS_NAME, "Jmlpdc")  # TODO: makesure IDnya ga dynamic
+    # adding loop to check gradually
+    elements=[]
+    retryCounter=0
+    while len(elements) < 2 and retryCounter < 5:  # max buffer 5 detik, lebih dianggap gagal
+        elements = browser.find_elements(By.CLASS_NAME, "Jmlpdc")  # TODO: makesure IDnya ga dynamic
+        retryCounter = retryCounter + 1
+        print('loop',elements)
+        time.sleep(1)
+        
     element= elements[1]
     imageUrl = element.get_attribute('src')
 
-    new_tab_url = imageUrl
-    print(imageUrl)
-    browser.execute_script(f"window.open('{new_tab_url}', '_blank');")
+    browser.execute_script(f"window.open('{imageUrl}', '_blank');")
     browser.switch_to.window(browser.window_handles[1])
     imgElement = browser.find_element(By.TAG_NAME, "img") 
     action = ActionChains(browser)
     action.context_click(imgElement).perform()
     time.sleep(1)
+    
     # pyautoGUI klik kanan & save as 
     pyautogui.press('down', presses=2, interval=0.1) 
     pyautogui.press('enter')
     time.sleep(1)
-    resultPath = dir + "\\result-temp\\"+fileName+".png"
+    
+
+    resultPath = dir + "/result-temp/"+fileName
     pyautogui.write(resultPath)
     pyautogui.press('enter')
     time.sleep(2) #buffer buat download
+    uploadDir = dir + "/result-temp/"
+    s3Url = uploadToS3(uploadDir,'itemku-upload-alpha',f'{fileName}.png')
     browser.quit()
-    return resultPath
+    return s3Url
 
 if __name__ == '__main__':
     app.run(port=80)
